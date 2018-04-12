@@ -39,16 +39,19 @@ module Magento
 
       # Get specific product by sku
       def get_product_by_sku(sku)
-        result, status = get_wrapper("/V1/products/#{sku}", default_headers)
-        return result, status unless status
-        return parse_product!(result), status
+        # result, status = get_wrapper("/V1/products/#{sku}", default_headers)
+        get_wrapper("/V1/products/#{sku}", default_headers)
+        # return result, status unless status
+        # return parse_product!(result), status
+      end
+
+      def get_product_stock_by_sku(sku)
+        get_wrapper("/V1/stockStatuses/#{sku}", default_headers).first['stock_item']
       end
 
       # Get all categories from magento
       def get_categories_list
-        result, status = get_wrapper('/V1/categories', default_headers)
-        return result, status unless status
-        return parse_categories(result), status
+        get_wrapper('/V1/categories', default_headers)
       end
 
       ## values e.g. [13, 10, 1]
@@ -57,6 +60,24 @@ module Magento
         result, status = get_wrapper("/V1/products/attributes/#{attribute_id}", default_headers)
         return result, status unless status
         return parse_attributes_by_values(result, values), status
+      end
+
+      # Get specific category by id
+      def get_category_by_id(id)
+        result = get_wrapper("/V1/categories/#{id}", default_headers)
+        return result
+      end
+
+      # Get configurable products
+      def get_configurable_products(sku)
+        configurable_products = get_wrapper("/V1/configurable-products/#{sku}/children", default_headers).first
+        return [] unless configurable_products.present?
+
+        products = []
+        configurable_products.each do |product|
+          products << parse_product!(product)
+        end
+        products
       end
 
       private
@@ -74,7 +95,7 @@ module Magento
 
       # Parse hash of one product
       def parse_product!(product)
-        custom_attr = product.delete('custom_attributes')
+        custom_attr = product['custom_attributes']
         custom_attr.each do |attr|
           product[attr['attribute_code']] = attr['value']
         end
