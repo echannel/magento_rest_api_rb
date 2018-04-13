@@ -39,10 +39,10 @@ module Magento
 
       # Get specific product by sku
       def get_product_by_sku(sku)
-        # result, status = get_wrapper("/V1/products/#{sku}", default_headers)
-        get_wrapper("/V1/products/#{sku}", default_headers)
-        # return result, status unless status
-        # return parse_product!(result), status
+        result, status = get_wrapper("/V1/products/#{sku}", default_headers)
+        # get_wrapper("/V1/products/#{sku}", default_headers)
+        return result, status unless status
+        return parse_product!(result), status
       end
 
       def get_product_stock_by_sku(sku)
@@ -59,7 +59,7 @@ module Magento
         return [] unless values.present?
         result, status = get_wrapper("/V1/products/attributes/#{attribute_id}", default_headers)
         return result, status unless status
-        return parse_attributes_by_values(result, values), status
+        return parse_attributes_by_values(result, values).first
       end
 
       # Get specific category by id
