@@ -40,6 +40,7 @@ module Magento
       # Get specific product by sku
       def get_product_by_sku(sku)
         result, status = get_wrapper("/V1/products/#{sku}", default_headers)
+        # get_wrapper("/V1/products/#{sku}", default_headers)
         return result, status unless status
         return parse_product!(result), status
       end
@@ -50,9 +51,7 @@ module Magento
 
       # Get all categories from magento
       def get_categories_list
-        result, status = get_wrapper('/V1/categories', default_headers)
-        return result, status unless status
-        return parse_categories(result), status
+        get_wrapper('/V1/categories', default_headers)
       end
 
       ## values e.g. [13, 10, 1]
