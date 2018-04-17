@@ -51,7 +51,7 @@ module Magento
 
       # Get all categories from magento
       def get_categories_list
-        get_wrapper('/V1/categories', default_headers)
+        get_wrapper('/all/V1/categories', default_headers)
       end
 
       ## values e.g. [13, 10, 1]
