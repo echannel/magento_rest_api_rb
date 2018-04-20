@@ -80,6 +80,13 @@ module Magento
         products
       end
 
+      # Get all attributes from attribute set
+      def get_attributes_by_attribute_set(attribute_set_id)
+        # return [] unless values.present?
+        get_wrapper("V1/products/attribute-sets/#{attribute_set_id}/attributes", default_headers).first || []
+        # return parse_attributes_by_values(result, values).first
+      end
+
       private
 
       # Parse products hash from search products method
