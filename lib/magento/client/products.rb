@@ -87,6 +87,10 @@ module Magento
         # return parse_attributes_by_values(result, values).first
       end
 
+      def get_store_groups
+        get_wrapper("/V1/store/storeGroups", default_headers).first
+      end
+
       private
 
       # Parse products hash from search products method
