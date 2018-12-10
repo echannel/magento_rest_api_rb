@@ -54,7 +54,11 @@ module Magento
         get_wrapper('/all/V1/categories', default_headers)
       end
 
-      ## values e.g. [13, 10, 1]
+      def get_product_attribute(attribute_id)
+        get_wrapper("/V1/products/attributes/#{attribute_id}", default_headers)
+      end
+
+      # values e.g. [13, 10, 1]
       def get_product_attribute_values(attribute_id, values = [])
         return [] unless values.present?
         result, status = get_wrapper("/V1/products/attributes/#{attribute_id}", default_headers)

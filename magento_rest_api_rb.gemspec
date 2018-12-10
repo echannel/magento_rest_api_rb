@@ -10,9 +10,9 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Lianowar"]
   spec.email         = ["novikov.vasiliy.d@gmail.com"]
 
-  spec.summary       = %q{Gem for Magentо REST Api}
-  spec.description   = %q{Gem for Magentо REST Api}
-  spec.homepage      = "TODO: Put your gem's website or public repo URL here."
+  spec.summary       = %q{Gem for Magentо 2 REST Api}
+  spec.description   = %q{Gem for Magentо 2 REST Api}
+  spec.homepage      = "https://github.com/Lianowar/magento_rest_api_rb"
   spec.license       = "MIT"
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'

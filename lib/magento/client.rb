@@ -2,7 +2,8 @@
 
 require 'rest-client'
 require 'json'
-require 'hashugar'
+require 'active_support'
+require 'active_support/core_ext'
 require 'magento/client/customers'
 require 'magento/client/products'
 require 'magento/client/cart'
@@ -28,21 +29,22 @@ module Magento
     include Magento::Client::Coupon
     include Magento::Client::Order
 
-    attr_reader :customer_token, :default_headers, :resource, :admin_token,
-                :guest_cart_key, :store_code
+    attr_reader :resource, :admin_token, :store_code
+    attr_accessor :guest_cart_key, :customer_token, :default_headers
 
-    def initialize(customer_token = nil, default_headers = nil, guest_cart_key = nil, store_code = nil)
+    def initialize(customer_token = nil, default_headers = nil, guest_cart_key = nil,
+                   store_code = MagentoRestApiRb.default_store_code)
       @customer_token = customer_token
       @default_headers = default_headers.nil? ? { accept: :json, content_type: :json } : default_headers
       @default_headers[:authorization] = "Bearer #{@customer_token}" unless @customer_token.nil?
       @guest_cart_key = guest_cart_key
-      @store_code = store_code || MagentoRestApiRb.default_store_code
+      @store_code = store_code
 
-      raise 'Has not resource host!' if MagentoRestApiRb.resource_host.nil?
+      raise Magento::Error, 'Has not resource host!' unless MagentoRestApiRb.resource_host.present?
 
-      @resource = MagentoRestApiRb.resource_host + "/#{@store_code}"
+      @resource = MagentoRestApiRb.resource_host.gsub(/\/$/, '')
+      @resource += "/#{@store_code}" if @store_code.present?
     end
-
 
     # Login customer and get token from magento backend by customer email and password
     def login_customer(email, password)
@@ -56,17 +58,11 @@ module Magento
 
     # Create new customer in magento backend
     def create_customer(customer_info, password)
-      headers = { accept: :json, content_type: :json }
-
-      get_admin_token
-
-      headers[:authorization] = "Bearer #{admin_token}"
       post_wrapper('/V1/customers',
                    { customer: customer_info,
                      password: password }.to_json,
-                   headers)
+                   admin_headers)
     end
-
 
     private
 
@@ -75,11 +71,11 @@ module Magento
       if admin_token.nil?
         headers = { accept: :json, content_type: :json }
         @admin_token, success = post_wrapper('/V1/integration/admin/token',
-                                             { "username" => MagentoRestApiRb.admin_login,
-                                               "password" => MagentoRestApiRb.admin_password }.to_json,
+                                             { username: MagentoRestApiRb.admin_login,
+                                               password: MagentoRestApiRb.admin_password }.to_json,
                                              headers)
 
-        raise @admin_token.to_s unless success
+        raise Magento::Error, @admin_token.to_s unless success
       end
       admin_token
     end
@@ -92,13 +88,9 @@ module Magento
     end
 
     def parse_error(error)
-      puts error
-      messages = JSON.parse(error).to_hashugar
-      messages.message.to_s.gsub /%([^ ]*)/ do |match|
-        messages.parameters[match]
-      end
-      rescue => e
-        error
+      errors_response = JSON.parse(error)
+    rescue JSON::ParserError => e
+      error
     end
 
     def parse_response(response)
@@ -108,39 +100,31 @@ module Magento
     ##
     # All API methods return result and success status (true, false)
     def get_wrapper(url, headers)
-      begin
-        return parse_response(RestClient.get(resource + url, headers)), true
-      rescue => e
-        return parse_error(e.response), false
-      end
+      [parse_response(RestClient.get(resource + url, headers)), true]
+    rescue RestClient::Exception => e
+      [parse_error(e.response), false]
     end
 
     def post_wrapper(url, payload, headers)
-      begin
-        return parse_response(RestClient.post(resource + url, payload, headers)), true
-      rescue => e
-        return parse_error(e.response), false
-      end
+      [parse_response(RestClient.post(resource + url, payload, headers)), true]
+    rescue RestClient::Exception => e
+      [parse_error(e.response), false]
     end
 
     def put_wrapper(url, payload, headers)
-      begin
-        return parse_response(RestClient.put(resource + url, payload, headers)), true
-      rescue => e
-        return parse_error(e.response), false
-      end
+      [parse_response(RestClient.put(resource + url, payload, headers)), true]
+    rescue RestClient::Exception => e
+      [parse_error(e.response), false]
     end
 
     def delete_wrapper(url, headers)
-      begin
-        return parse_response(RestClient.delete(resource + url, headers)), true
-      rescue => e
-        return parse_error(e.response), false
-      end
+      [parse_response(RestClient.delete(resource + url, headers)), true]
+    rescue RestClient::Exception => e
+      [parse_error(e.response), false]
     end
 
     def check_user_authorization
-      raise 'User not authorized' if customer_token.nil?
+      raise Magento::Error, 'User not authorized' if customer_token.nil?
     end
 
     # Prepare search filters e.g. for products search
