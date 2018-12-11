@@ -128,7 +128,7 @@ module Magento
     end
 
     # Prepare search filters e.g. for products search
-    def prepare_filters(filters, page, per_page, filter_group_start_index = 0)
+    def prepare_filters(filters, page, per_page, filter_group_start_index = 0, additional_attributes = [])
       filter_array = []
       if filters.present?
         filters[:filter_groups].each_with_index do |filter_group, group_index|
@@ -147,6 +147,7 @@ module Magento
         end
       end
 
+      filter_array.push("searchCriteria[additionalAttributes]=#{additional_attributes}") if additional_attributes.present?
       filter_array.push("searchCriteria[pageSize]=#{per_page}") if per_page.present?
       filter_array.push("searchCriteria[currentPage]=#{page}") if page.present?
       filter_array.join '&'
