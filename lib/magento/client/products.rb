@@ -32,7 +32,7 @@ module Magento
         products.map{|product| product.deep_symbolize_keys}
       end
 
-      def get_products(page, per_page, filters = {})
+      def get_products(page, per_page, store_id, magento_version, filters = {})
         @product_filters = product_visibility_filters(store_id, magento_version) + prepare_filters(filters, page, per_page, 2)
         result, status = get_wrapper('/V1/products?' + product_filters, default_headers)
         return result, status unless status
@@ -61,11 +61,7 @@ module Magento
         get_wrapper("/V1/categories#{'?' + specific_store_filters(store_id) if supports_store_filter?(magento_version)}", default_headers)
       end
 
-      def get_product_attribute(attribute_id)
-        get_wrapper("/V1/products/attributes/#{attribute_id}", default_headers)
-      end
-
-      # values e.g. [13, 10, 1]
+      ## values e.g. [13, 10, 1]
       def get_product_attribute_values(attribute_id, store_id, magento_version, values = [])
         return [] unless values.present?
         result, status = get_wrapper("/V1/products/attributes/#{attribute_id}#{'?' + specific_store_filters(store_id) if supports_store_filter?(magento_version)}", default_headers)
@@ -166,7 +162,8 @@ module Magento
                           +"searchCriteria[filter_groups][1][filters][0][field]=visibility&"+
                           +"searchCriteria[filter_groups][1][filters][0][value]=2,3,4&"+
                           +"searchCriteria[filter_groups][1][filters][0][condition_type]=in&"
-         products_filters = supports_store_filter?(magento_version) ? products_filters + "#{specific_store_filters(store_id)}" : products_filters
+
+        products_filters = supports_store_filter?(magento_version) ? products_filters + "#{specific_store_filters(store_id)}" : products_filters
       end
 
       def specific_store_filters(store_id)
